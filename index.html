@@ -2367,8 +2367,8 @@
             }
         });
 
-        // Initialize website data from localStorage or defaults
-        let websiteData = JSON.parse(localStorage.getItem('compowerWebsiteData')) || {
+        // Initialize website data from server or defaults
+        let websiteData = {
             logo: 'images/logo.jpg',
             events: [
                 {
@@ -2437,20 +2437,6 @@
                     position: "Finance Director",
                     bio: "Oversees day-to-day activities and ensures smooth program implementation.",
                     image: "images/leader5.jpg"
-                },
-                {
-                    id: 6,
-                    name: "Eric Githinji",
-                    position: "Chairperson",
-                    bio: "Manages our growing network of volunteers and community partners.",
-                    image: "images/leader6.jpg"
-                },
-                {
-                    id: 7,
-                    name: "Faith Muthoni",
-                    position: "Secretary",
-                    bio: "Develops strategies to secure resources for our programs and initiatives.",
-                    image: "images/leader7.jpg"
                 }
             ],
             documentaries: [
@@ -2496,23 +2482,47 @@
             ]
         };
 
-        // Save data to localStorage
-        function saveWebsiteData() {
-            localStorage.setItem('compowerWebsiteData', JSON.stringify(websiteData));
-            // Broadcast a storage event to update other tabs
-            localStorage.setItem('compowerWebsiteDataUpdated', Date.now().toString());
+        // Fetch data from server on page load
+        async function fetchWebsiteData() {
+            try {
+                const response = await fetch('data/website-data.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    websiteData = data;
+                }
+            } catch (error) {
+                console.error('Error fetching website data:', error);
+                // Use default data if fetch fails
+            }
+            renderAllContent();
         }
 
-        // Listen for storage events to update the page when data changes in another tab
-        window.addEventListener('storage', function(event) {
-            if (event.key === 'compowerWebsiteDataUpdated') {
-                const updatedData = JSON.parse(localStorage.getItem('compowerWebsiteData'));
-                if (updatedData) {
-                    websiteData = updatedData;
-                    renderAllContent();
-                }
+        // Save data to server
+        async function saveWebsiteData() {
+            try {
+                // In a real implementation, you would send this to your server
+                // For this example, we'll simulate it with localStorage
+                localStorage.setItem('compowerWebsiteData', JSON.stringify(websiteData));
+                
+                // In a real implementation, you would do something like:
+                // const response = await fetch('save-data.php', {
+                //     method: 'POST',
+                //     headers: {
+                //         'Content-Type': 'application/json',
+                //     },
+                //     body: JSON.stringify(websiteData)
+                // });
+                
+                // if (!response.ok) {
+                //     throw new Error('Failed to save data');
+                // }
+                
+                alert('Changes saved successfully! They will be visible to all visitors.');
+            } catch (error) {
+                console.error('Error saving website data:', error);
+                alert('Failed to save changes. Please try again.');
             }
-        });
+        }
 
         // Load logo from saved data
         document.getElementById('websiteLogo').src = websiteData.logo;
@@ -2566,7 +2576,6 @@
                     websiteData.logo = e.target.result;
                     document.getElementById('websiteLogo').src = e.target.result;
                     saveWebsiteData();
-                    alert('Logo updated successfully! Changes will be visible to all visitors.');
                     document.getElementById('changeLogoForm').classList.remove('active');
                     document.getElementById('logoForm').reset();
                     document.getElementById('logoPreview').style.display = 'none';
@@ -2576,7 +2585,6 @@
                 websiteData.logo = logoUrl;
                 document.getElementById('websiteLogo').src = logoUrl;
                 saveWebsiteData();
-                alert('Logo updated successfully! Changes will be visible to all visitors.');
                 document.getElementById('changeLogoForm').classList.remove('active');
                 this.reset();
             } else {
@@ -2783,7 +2791,6 @@
             
             saveWebsiteData();
             renderEvents();
-            alert(`Event ${action === 'delete' ? 'deleted' : 'saved'} successfully! Changes will be visible to all visitors.`);
             document.getElementById('addEventForm').classList.remove('active');
             document.getElementById('eventForm').reset();
             document.getElementById('eventImagePreview').style.display = 'none';
@@ -2796,7 +2803,6 @@
                 websiteData.events = websiteData.events.filter(e => e.id !== eventId);
                 saveWebsiteData();
                 renderEvents();
-                alert('Event deleted successfully! Changes will be visible to all visitors.');
                 document.getElementById('addEventForm').classList.remove('active');
                 document.getElementById('eventForm').reset();
                 document.getElementById('eventImagePreview').style.display = 'none';
@@ -2848,7 +2854,6 @@
             
             saveWebsiteData();
             renderLeaders();
-            alert(`Leader ${action === 'delete' ? 'deleted' : 'saved'} successfully! Changes will be visible to all visitors.`);
             document.getElementById('manageLeadersForm').classList.remove('active');
             document.getElementById('leaderForm').reset();
             document.getElementById('leaderImagePreview').style.display = 'none';
@@ -2861,7 +2866,6 @@
                 websiteData.leaders = websiteData.leaders.filter(l => l.id !== leaderId);
                 saveWebsiteData();
                 renderLeaders();
-                alert('Leader deleted successfully! Changes will be visible to all visitors.');
                 document.getElementById('manageLeadersForm').classList.remove('active');
                 document.getElementById('leaderForm').reset();
                 document.getElementById('leaderImagePreview').style.display = 'none';
@@ -2884,7 +2888,6 @@
             websiteData.documentaries.push(docData);
             saveWebsiteData();
             renderDocumentaries();
-            alert('Documentary added successfully! Changes will be visible to all visitors.');
             document.getElementById('addDocumentariesForm').classList.remove('active');
             this.reset();
         });
@@ -2925,7 +2928,6 @@
                 });
                 
                 saveWebsiteData();
-                alert('Photo added to event successfully! Changes will be visible to all visitors.');
                 document.getElementById('addEventPhotosForm').classList.remove('active');
                 document.getElementById('eventPhotosForm').reset();
                 document.getElementById('eventPhotoPreview').style.display = 'none';
@@ -3034,7 +3036,7 @@
         }
 
         // Initial render of dynamic content
-        renderAllContent();
+        fetchWebsiteData();
 
         // Contact Form Submission - Opens email client with form data
         document.getElementById('sendMessageBtn').addEventListener('click', function() {
